@@ -12,14 +12,21 @@ app.use(cors());
 const AIVEN_URL = process.env.DATABASE_URL;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
 
-if (!AIVEN_URL) {
-    console.warn('⚠️ WARNING: DATABASE_URL is not set in environment variables!');
-}
-
 const pool = new Pool({
     connectionString: AIVEN_URL,
     ssl: { rejectUnauthorized: false },
     connectionTimeoutMillis: 15000,
+});
+
+// Middleware to check for DB URL
+app.use((req, res, next) => {
+    if (!AIVEN_URL) {
+        return res.status(503).json({
+            error: 'Database configuration missing.',
+            detail: 'DATABASE_URL is not set in Netlify environment variables.'
+        });
+    }
+    next();
 });
 
 // Helper to ensure table exists
